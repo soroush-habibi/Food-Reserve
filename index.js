@@ -16,7 +16,8 @@ DB.connect(async (client) => {
     //     console.log(e);
     // });
     // const result = await DB.updateUsername("40013131001", "sshh1382", "soroush").catch(e => console.log(e));
-    // console.log(result);
+    const result = await DB.updatePassword("soroush", "sshh1382", "SShh1382@$").catch(e => console.log(e));
+    console.log(result);
 
 }).catch(e => {
     console.log(e.message);

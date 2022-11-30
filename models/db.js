@@ -103,4 +103,22 @@ export default class DB {
             throw "Password is wrong";
         }
     }
+
+    static async updatePassword(username, oldPassword, newPassword) {
+        if (username == null || typeof username !== "string" || oldPassword == null || typeof oldPassword !== "string"
+            || newPassword == null || typeof newPassword !== "string" || newPassword.length < 8) {
+            throw "invalid input";
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw "can not find user";
+        } else if (await bcrypt.compare(oldPassword, hashedPassword.password)) {
+            const result = await this.client.db("Food").collection("users").updateOne({ username: username }, { $set: { password: bcrypt.hashSync(newPassword, 10) } });
+            return result;
+        } else {
+            throw "Password is wrong";
+        }
+    }
 }
