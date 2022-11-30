@@ -1,5 +1,6 @@
 import express from 'express';
 import 'dotenv/config';
+import rateLimit from 'express-rate-limit';
 
 import DB from './models/db.js';
 
@@ -25,3 +26,10 @@ DB.connect(async (client) => {
 }).catch(e => {
     console.log(e.message);
 });
+
+app.use(rateLimit({
+    windowMs: 1000 * 60 * 2,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false
+}));

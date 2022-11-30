@@ -166,7 +166,6 @@ export default class DB {
     }
 
     static async createFood(username, password, name, meal, price, locations, time) {
-        console.log(username, password, name, meal, price, locations, time);
         if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || typeof name !== "string"
             || name.length <= 3 || typeof meal !== "number" || meal < 1 || meal > 5 || typeof price !== "number" || price <= 0
             || !(locations instanceof Array) || !(time instanceof Date)) {
