@@ -92,7 +92,7 @@ export default class DB {
             throw "username should contain at least 1 character";
         }
 
-        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: oldUsername }, { _id: 0, password: 1 });
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: oldUsername });
 
         if (!hashedPassword) {
             throw "can not find user";
@@ -116,6 +116,24 @@ export default class DB {
             throw "can not find user";
         } else if (await bcrypt.compare(oldPassword, hashedPassword.password)) {
             const result = await this.client.db("Food").collection("users").updateOne({ username: username }, { $set: { password: bcrypt.hashSync(newPassword, 10) } });
+            return result;
+        } else {
+            throw "Password is wrong";
+        }
+    }
+
+    static async updateEmail(username, password, newEmail) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" ||
+            newEmail == null || !(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(newEmail))) {
+            throw "invalid input";
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw "can not find user"
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const result = this.client.db("Food").collection("users").updateOne({ username: username }, { $set: { email: newEmail } });
             return result;
         } else {
             throw "Password is wrong";
