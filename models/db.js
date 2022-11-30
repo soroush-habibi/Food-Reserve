@@ -156,12 +156,40 @@ export default class DB {
 
         let transaction = {
             amount: amount,
-            time: Date.now()
+            time: new Date()
         }
 
         const result = await this.client.db("Food").collection("users").updateOne({ username: username }, { $push: { currency_transactions: transaction } });
         const result2 = await this.client.db("Food").collection("users").updateOne({ username: username }, { $inc: { currency: transaction.amount } });
 
         return { result, result2 };
+    }
+
+    static async createFood(username, password, name, meal, price, locations, time) {
+        console.log(username, password, name, meal, price, locations, time);
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || typeof name !== "string"
+            || name.length <= 3 || typeof meal !== "number" || meal < 1 || meal > 5 || typeof price !== "number" || price <= 0
+            || !(locations instanceof Array) || !(time instanceof Date)) {
+            throw "invalid input";
+        }
+
+        const data = await this.client.db("Food").collection("foods").countDocuments({ name: name, meal: meal, time: time });
+
+        if (data > 0) {
+            throw "you register this food before"
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw "can not find user";
+        } else if (!hashedPassword.admin) {
+            throw "you dont have permission to add food";
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const result = await this.client.db("Food").collection("foods").insertOne({ name: name, meal: meal, price: price, locations: locations, time: time });
+            return result;
+        } else {
+            throw "Password is wrong";
+        }
     }
 }
