@@ -17,8 +17,9 @@ DB.connect(async (client) => {
     // });
     // const result = await DB.updateUsername("40013131001", "sshh1382", "soroush").catch(e => console.log(e));
     // const result = await DB.updatePassword("soroush", "sshh1382", "SShh1382@$").catch(e => console.log(e));
-    const result = await DB.updateEmail("soroush", "SShh1382@$", "soroush@outlook.com").catch(e => console.log(e));
-    console.log(result);
+    // const result = await DB.updateEmail("soroush", "SShh1382@$", "soroush@outlook.com").catch(e => console.log(e));
+    const result = await DB.increaseCurrency("soroush", "SShh1382@$", 100).catch(e => console.log(e));
+    // console.log(result);
 
 }).catch(e => {
     console.log(e.message);

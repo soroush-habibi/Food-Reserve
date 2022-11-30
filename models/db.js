@@ -1,5 +1,5 @@
 import mongodb from 'mongodb';
-import bcrypt, { hash } from 'bcrypt';
+import bcrypt from 'bcrypt';
 
 export default class DB {
     static async connect(func) {
@@ -57,6 +57,7 @@ export default class DB {
             username: String(studentId),
             password: bcrypt.hashSync(password, 10),
             email: "",
+            admin: false,
             currency: 0,
             currency_transactions: [],
             food_reserves: []
@@ -138,5 +139,29 @@ export default class DB {
         } else {
             throw "Password is wrong";
         }
+    }
+
+    static async increaseCurrency(username, password, amount) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || typeof amount !== "number" || amount <= 0) {
+            throw "invalid input";
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw "can not find user";
+        } else if (!(await bcrypt.compare(password, hashedPassword.password))) {
+            throw "Password is wrong";
+        }
+
+        let transaction = {
+            amount: amount,
+            time: Date.now()
+        }
+
+        const result = await this.client.db("Food").collection("users").updateOne({ username: username }, { $push: { currency_transactions: transaction } });
+        const result2 = await this.client.db("Food").collection("users").updateOne({ username: username }, { $inc: { currency: transaction.amount } });
+
+        return { result, result2 };
     }
 }
