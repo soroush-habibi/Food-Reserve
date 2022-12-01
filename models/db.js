@@ -1,5 +1,5 @@
 import mongodb from 'mongodb';
-import bcrypt from 'bcrypt';
+import bcrypt, { hash } from 'bcrypt';
 
 export default class DB {
     static async connect(func) {
@@ -145,6 +145,10 @@ export default class DB {
         if (!hashedPassword) {
             throw "can not find user"
         } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const data = await this.client.db("Food").collection("users").findOne({ email: newEmail });
+            if (data) {
+                throw "email registered before";
+            }
             const result = this.client.db("Food").collection("users").updateOne({ username: username }, { $set: { email: newEmail } });
             return result;
         } else {
@@ -249,6 +253,60 @@ export default class DB {
                 time: time,
                 reserves_count: 0
             });
+            return result;
+        } else {
+            throw "Password is wrong";
+        }
+    }
+
+    static async promote(username, password, targetUser) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || targetUser == null || typeof targetUser !== "string") {
+            throw "invalid input";
+        }
+
+        const t = await this.client.db("Food").collection("users").findOne({ username: targetUser });
+
+        if (!t) {
+            throw "can not find target user";
+        } else if (t.admin) {
+            throw "target user is admin already";
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw "can not find admin username";
+        } else if (!hashedPassword.admin) {
+            throw "you dont have permission to promote anyone";
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const result = await this.client.db("Food").collection("users").updateOne({ username: targetUser }, { $set: { admin: true } });
+            return result;
+        } else {
+            throw "Password is wrong";
+        }
+    }
+
+    static async demote(username, password, targetUser) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || targetUser == null || typeof targetUser !== "string") {
+            throw "invalid input";
+        }
+
+        const t = await this.client.db("Food").collection("users").findOne({ username: targetUser });
+
+        if (!t) {
+            throw "can not find target user";
+        } else if (!t.admin) {
+            throw "target user is not admin already";
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw "can not find admin username";
+        } else if (!hashedPassword.admin) {
+            throw "you dont have permission to promote anyone";
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const result = await this.client.db("Food").collection("users").updateOne({ username: targetUser }, { $set: { admin: false } });
             return result;
         } else {
             throw "Password is wrong";
