@@ -165,6 +165,51 @@ export default class DB {
         return { result, result2 };
     }
 
+    static async reserveFood(username, password, id, amount, location) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || id == null || !(id instanceof mongodb.ObjectId)
+            || amount == null || amount <= 0 || location == null || typeof location !== "string") {
+            throw "invalid input";
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw "cant not find user";
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const food = await this.client.db("Food").collection("foods").findOne({ _id: id });
+            if (!food) {
+                throw "can not find food";
+            } else if ((food.time.getTime() - (1000 * 60 * 60 * 24)) < Date.now()) {
+                throw "food is expired";
+            } else if (!food.locations.includes(location)) {
+                throw "you can not reserve food on this location";
+            } else if (hashedPassword.currency < (food.price * amount)) {
+                throw "you dont have enough money"
+            } else {
+                const result = await this.client.db("Food").collection("foods").updateOne({ _id: id }, { $inc: { reserves_count: amount } });
+                const result2 = await this.client.db("Food").collection("users").updateOne({ username: username }, {
+                    $push: {
+                        food_reserves: {
+                            name: food.name,
+                            meal: food.meal,
+                            price: food.price * amount,
+                            reserve_time: new Date(),
+                            time: food.time,
+                            amount: amount,
+                            used: false,
+                            location: location
+                        }
+                    }, $inc: {
+                        currency: -(food.price * amount)
+                    }
+                });
+                return { result, result2 };
+            }
+        } else {
+            throw "Password is wrong";
+        }
+    }
+
     static async createFood(username, password, name, meal, price, locations, time) {
         if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || typeof name !== "string"
             || name.length <= 3 || typeof meal !== "number" || meal < 1 || meal > 5 || typeof price !== "number" || price <= 0
@@ -185,7 +230,14 @@ export default class DB {
         } else if (!hashedPassword.admin) {
             throw "you dont have permission to add food";
         } else if (await bcrypt.compare(password, hashedPassword.password)) {
-            const result = await this.client.db("Food").collection("foods").insertOne({ name: name, meal: meal, price: price, locations: locations, time: time });
+            const result = await this.client.db("Food").collection("foods").insertOne({
+                name: name,
+                meal: meal,
+                price: price,
+                locations: locations,
+                time: time,
+                reserves_count: 0
+            });
             return result;
         } else {
             throw "Password is wrong";

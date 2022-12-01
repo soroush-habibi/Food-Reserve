@@ -1,6 +1,7 @@
 import express from 'express';
 import 'dotenv/config';
 import rateLimit from 'express-rate-limit';
+import mongodb from 'mongodb';
 
 import DB from './models/db.js';
 
@@ -20,7 +21,8 @@ DB.connect(async (client) => {
     // const result = await DB.updatePassword("soroush", "sshh1382", "SShh1382@$").catch(e => console.log(e));
     // const result = await DB.updateEmail("soroush", "SShh1382@$", "soroush@outlook.com").catch(e => console.log(e));
     // const result = await DB.increaseCurrency("soroush", "SShh1382@$", 100).catch(e => console.log(e));
-    const result = await DB.createFood("soroush", "SShh1382@$", "beaf", 1, 6000, ["pardis1", "pardis2"], new Date(2022, 12, 1)).catch(e => console.log(e));
+    // const result = await DB.createFood("soroush", "SShh1382@$", "chicken", 2, 4000, ["pardis1", "pardis2"], new Date(2022, 12, 4)).catch(e => console.log(e));
+    const result = await DB.reserveFood("40013131000", "sshh1382", mongodb.ObjectId("6388ac37970f14fd91949ec1"), 6, "pardis1").catch(e => console.log(e));
     console.log(result);
 
 }).catch(e => {
