@@ -12,9 +12,20 @@ export default class DB {
         return result ? true : false;
     }
 
-    static async existsEmail(email) {
-        const result = await this.client.db("Food").collection("users").countDocuments({ email: email });
-        return result ? true : false;
+    static async login(username, password) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string") {
+            throw "invalid input";
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw "can not find user";
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            return true;
+        } else {
+            throw "Password is wrong";
+        }
     }
 
     static async createUser(fullname, password) {
