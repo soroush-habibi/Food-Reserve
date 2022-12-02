@@ -4,6 +4,8 @@ import apiController from '../controllers/apiController.js';
 
 const router = express.Router();
 
-router.get("/login", apiController.login);
+router.get("/user", apiController.login);
+
+router.post("/user", apiController.register);
 
 export default router;

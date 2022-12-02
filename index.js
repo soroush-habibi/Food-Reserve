@@ -3,9 +3,15 @@ import 'dotenv/config';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import mongodb from 'mongodb';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
 
 import DB from './models/db.js';
 import apiRouter from './routes/apiRoutes.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+process.env.ROOT = __dirname;
 
 const app = express();
 
@@ -29,5 +35,7 @@ app.use(rateLimit({
 }));
 
 app.use(helmet());
+
+app.use(cookieParser());
 
 app.use("/api", apiRouter);
