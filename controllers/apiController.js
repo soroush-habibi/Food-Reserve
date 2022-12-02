@@ -42,7 +42,6 @@ export default class apiController {
                         body: false,
                         message: e.message
                     });
-                    client.close();
                 });
             });
         } catch (e) {
@@ -88,6 +87,62 @@ export default class apiController {
     }
 
     static async register(req, res) {
+        if (!req.body.fullname || !req.body.password) {
+            res.status(400).json({
+                success: false,
+                body: null,
+                message: "Invalid input"
+            });
+            return;
+        }
 
+        try {
+            DB.connect(async (client) => {
+                const result = await DB.createUser(req.body.fullname, req.body.password).catch(e => {
+                    if (e.message.includes("duplicate")) {
+                        res.status(400).json({
+                            success: false,
+                            body: null,
+                            message: "fullname exists"
+                        });
+                    } else {
+                        res.status(400).json({
+                            success: false,
+                            body: null,
+                            message: e.message
+                        });
+                    }
+                });
+                if (!result) {
+                    return
+                }
+                if (result.acknowledged) {
+                    res.status(201).json({
+                        success: true,
+                        body: result.insertedId,
+                        message: "OK"
+                    });
+                } else {
+                    res.status(500).json({
+                        success: false,
+                        body: result,
+                        message: "Internal error"
+                    });
+                }
+                client.close();
+            }).catch(e => {
+                res.status(500).json({
+                    success: false,
+                    body: null,
+                    message: e.message
+                });
+            });
+        } catch (e) {
+            res.status(500).json({
+                success: false,
+                body: null,
+                message: e.message
+            });
+        }
     }
 }

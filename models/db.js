@@ -29,6 +29,10 @@ export default class DB {
     }
 
     static async createUser(fullname, password) {
+        if (fullname == null || typeof fullname !== "string" || password == null || typeof password !== "string") {
+            throw new Error("invalid input");
+        }
+
         let studentId, foodCode;
         if (fullname.length < 7) {
             throw new Error("fullname should be greater than 6 characters");
