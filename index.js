@@ -26,16 +26,17 @@ DB.connect(async (client) => {
 });
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(rateLimit({
     windowMs: 1000 * 60 * 2,
-    max: 10,
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false
 }));
 
 app.use(helmet());
 
-app.use(cookieParser());
+
 
 app.use("/api", apiRouter);

@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 import DB from "../models/db.js";
+import { request } from "http";
 
 export default class apiController {
     static async login(req, res) {
@@ -128,6 +129,265 @@ export default class apiController {
                         body: result,
                         message: "Internal error"
                     });
+                }
+                client.close();
+            }).catch(e => {
+                res.status(500).json({
+                    success: false,
+                    body: null,
+                    message: e.message
+                });
+            });
+        } catch (e) {
+            res.status(500).json({
+                success: false,
+                body: null,
+                message: e.message
+            });
+        }
+    }
+
+    static async editUser(req, res) {
+        if (typeof req.body.type !== "number" || req.body.type < 0 || req.body.type > 5) {
+            res.status(400).json({
+                success: false,
+                body: null,
+                message: "Invalid input"
+            });
+            return;
+        }
+
+        try {
+            DB.connect(async (client) => {
+                switch (req.body.type) {
+                    case 0:                         //!Update food code password
+                        if (typeof req.body.newCode !== "number" || String(req.body.newCode).length !== 6) {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: "Invalid input"
+                            });
+                            return;
+                        }
+
+                        const result = await DB.updateFoodCodePassword(req.username, req.password, req.body.newCode).catch(e => {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: e.message
+                            });
+                        });
+
+                        if (!result) {
+                            return
+                        }
+                        if (result.acknowledged) {
+                            res.status(200).json({
+                                success: true,
+                                body: result.modifiedCount,
+                                message: "OK"
+                            });
+                        } else {
+                            res.status(500).json({
+                                success: false,
+                                body: result,
+                                message: "Internal error"
+                            });
+                        }
+                        break;
+                    case 1:                         //!Update username
+                        if (req.body.newUsername == null || typeof req.body.newUsername !== "string") {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: "Invalid input"
+                            });
+                            return;
+                        }
+
+                        const result2 = await DB.updateUsername(req.username, req.password, req.body.newUsername).catch(e => {
+                            if (e.message.includes("duplicate")) {
+                                res.status(400).json({
+                                    success: false,
+                                    body: null,
+                                    message: "username exists"
+                                });
+                            } else {
+                                res.status(400).json({
+                                    success: false,
+                                    body: null,
+                                    message: e.message
+                                });
+                            }
+                        });
+
+                        if (!result2) {
+                            return
+                        }
+                        if (result2.acknowledged) {
+                            const token = JWT.sign({
+                                username: req.body.newUsername,
+                                password: req.password
+                            }, fs.readFileSync(path.join(process.env.ROOT, "private.key")), { algorithm: "RS256", expiresIn: "7d" });
+                            res.cookie("JWT", token, { httpOnly: true, expires: new Date(Date.now() + 604800000) });
+                            res.status(200).json({
+                                success: true,
+                                body: result2.modifiedCount,
+                                message: "OK"
+                            });
+                        } else {
+                            res.status(500).json({
+                                success: false,
+                                body: result2,
+                                message: "Internal error"
+                            });
+                        }
+                        break;
+                    case 2:                         //!Update password
+                        if (req.body.newPassword == null || typeof req.body.newPassword !== "string") {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: "Invalid input"
+                            });
+                            return;
+                        }
+
+                        const result3 = await DB.updatePassword(req.username, req.password, req.body.newPassword).catch(e => {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: e.message
+                            });
+                        });
+
+                        if (!result3) {
+                            return
+                        }
+                        if (result3.acknowledged) {
+                            const token = JWT.sign({
+                                username: req.username,
+                                password: req.body.newPassword
+                            }, fs.readFileSync(path.join(process.env.ROOT, "private.key")), { algorithm: "RS256", expiresIn: "7d" });
+                            res.cookie("JWT", token, { httpOnly: true, expires: new Date(Date.now() + 604800000) });
+                            res.status(200).json({
+                                success: true,
+                                body: result3.modifiedCount,
+                                message: "OK"
+                            });
+                        } else {
+                            res.status(500).json({
+                                success: false,
+                                body: result3,
+                                message: "Internal error"
+                            });
+                        }
+                        break;
+                    case 3:                         //!Update email
+                        if (req.body.newEmail == null || typeof req.body.newEmail !== "string") {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: "Invalid input"
+                            });
+                            return;
+                        }
+
+                        const result4 = await DB.updateEmail(req.username, req.password, req.body.newEmail).catch(e => {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: e.message
+                            });
+                        });
+
+                        if (!result4) {
+                            return
+                        }
+                        if (result4.acknowledged) {
+                            res.status(200).json({
+                                success: true,
+                                body: result4.modifiedCount,
+                                message: "OK"
+                            });
+                        } else {
+                            res.status(500).json({
+                                success: false,
+                                body: result4,
+                                message: "Internal error"
+                            });
+                        }
+                        break;
+                    case 4:                         //!Promote
+                        if (req.body.targetUser == null || typeof req.body.targetUser !== "string") {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: "Invalid input"
+                            });
+                            return;
+                        }
+
+                        const result5 = await DB.promote(req.username, req.password, req.body.targetUser).catch(e => {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: e.message
+                            });
+                        });
+
+                        if (!result5) {
+                            return
+                        }
+                        if (result5.acknowledged) {
+                            res.status(200).json({
+                                success: true,
+                                body: result5.modifiedCount,
+                                message: "OK"
+                            });
+                        } else {
+                            res.status(500).json({
+                                success: false,
+                                body: result5,
+                                message: "Internal error"
+                            });
+                        }
+                        break;
+                    case 5:                         //!Demote
+                        if (req.body.targetUser == null || typeof req.body.targetUser !== "string") {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: "Invalid input"
+                            });
+                            return;
+                        }
+
+                        const result6 = await DB.demote(req.username, req.password, req.body.targetUser).catch(e => {
+                            res.status(400).json({
+                                success: false,
+                                body: null,
+                                message: e.message
+                            });
+                        });
+
+                        if (!result6) {
+                            return
+                        }
+                        if (result6.acknowledged) {
+                            res.status(200).json({
+                                success: true,
+                                body: result6.modifiedCount,
+                                message: "OK"
+                            });
+                        } else {
+                            res.status(500).json({
+                                success: false,
+                                body: result6,
+                                message: "Internal error"
+                            });
+                        }
+                        break;
                 }
                 client.close();
             }).catch(e => {

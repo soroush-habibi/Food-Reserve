@@ -82,7 +82,7 @@ export default class DB {
     }
 
     static async updateFoodCodePassword(username, password, newCode) {
-        if (password == null || newCode == null || typeof newCode !== "number" || typeof username !== "string") {
+        if (username == null || password == null || newCode == null || typeof username !== "string" || typeof password !== "string" || typeof newCode !== "number") {
             throw new Error("invalid input");
         }
 
