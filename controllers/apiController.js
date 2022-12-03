@@ -405,4 +405,61 @@ export default class apiController {
             });
         }
     }
+
+    static async increaseCurrency(req, res) {
+        if (!req.body.amount || typeof req.body.amount !== "number") {
+            res.status(400).json({
+                success: false,
+                body: null,
+                message: "Invalid input"
+            });
+            return;
+        }
+
+        console.log(req.body.amount);
+
+        try {
+            DB.connect(async (client) => {
+                const result = await DB.increaseCurrency(req.username, req.password, req.body.amount).catch(e => {
+                    res.status(400).json({
+                        success: false,
+                        body: null,
+                        message: e.message
+                    });
+                });
+
+                if (!result) {
+                    return;
+                }
+
+                if (result.result.acknowledged && result.result2.acknowledged) {
+                    res.status(200).json({
+                        success: true,
+                        body: result.result.modifiedCount + " - " + result.result2.modifiedCount,
+                        message: "OK"
+                    });
+                } else {
+                    res.status(500).json({
+                        success: false,
+                        body: null,
+                        message: "Internal error"
+                    });
+                }
+
+                client.close();
+            }).catch(e => {
+                res.status(500).json({
+                    success: false,
+                    body: null,
+                    message: e.message
+                });
+            });
+        } catch (e) {
+            res.status(500).json({
+                success: false,
+                body: null,
+                message: e.message
+            });
+        }
+    }
 }
