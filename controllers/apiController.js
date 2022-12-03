@@ -462,4 +462,63 @@ export default class apiController {
             });
         }
     }
+
+    static async createFood(req, res) {
+        if (req.body.name == null || req.body.meal == null || req.body.price == null || req.body.locations == null || req.body.year == null || req.body.month == null
+            || req.body.day == null || req.body.hour == null || req.body.minute == null || typeof req.body.name !== "string" || typeof req.body.meal !== "number"
+            || typeof req.body.price !== "number" || !(req.body.locations instanceof Array) || typeof req.body.year !== "number" || typeof req.body.month !== "number"
+            || typeof req.body.day !== "number" || typeof req.body.hour !== "number" || typeof req.body.minute !== "number") {
+            res.status(400).json({
+                success: false,
+                body: null,
+                message: "Invalid input"
+            });
+            return;
+        }
+
+        try {
+            const date = new Date(req.body.year, req.body.month - 1, req.body.day, req.body.hour, req.body.minute);
+            DB.connect(async (client) => {
+                const result = await DB.createFood(req.username, req.password, req.body.name, req.body.meal, req.body.price, req.body.locations, date).catch(e => {
+                    res.status(400).json({
+                        success: false,
+                        body: null,
+                        message: e.message
+                    });
+                });
+
+                if (!result) {
+                    return;
+                }
+
+                if (result.acknowledged) {
+                    res.status(201).json({
+                        success: true,
+                        body: result.insertedId,
+                        message: "OK"
+                    });
+                } else {
+                    res.status(500).json({
+                        success: false,
+                        body: null,
+                        message: "Internal error"
+                    });
+                }
+
+                client.close();
+            }).catch(e => {
+                res.status(500).json({
+                    success: false,
+                    body: null,
+                    message: e.message
+                });
+            });
+        } catch (e) {
+            res.status(500).json({
+                success: false,
+                body: null,
+                message: e.message
+            });
+        }
+    }
 }
