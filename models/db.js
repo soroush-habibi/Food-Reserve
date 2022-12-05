@@ -263,6 +263,46 @@ export default class DB {
         }
     }
 
+    static async deleteFood(username, password, id) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || id == null || !(id instanceof mongodb.ObjectId)) {
+            throw new Error("invalid input");
+        }
+
+        const food = await this.client.db("Food").collection("foods").findOne({ _id: id });
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!food) {
+            throw new Error("can not find food");
+        } else if (!hashedPassword) {
+            throw new Error("can not find user");
+        } else if (!hashedPassword.admin) {
+            throw new Error("you dont have permission to delete food");
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const result = await this.client.db("Food").collection("foods").deleteOne({ _id: id });
+            const result2 = await this.client.db("Food").collection("users").updateMany(
+                {
+                    food_reserves: {
+                        $elemMatch: {
+                            name: food.name, meal: food.meal, time: food.time
+                        }
+                    }
+                }, {
+                $pull: {
+                    food_reserves: {
+                        name: food.name,
+                        meal: food.meal,
+                        time: food.time
+                    }
+                }
+            }
+            );
+            return { result, result2 };
+        } else {
+            throw new Error("Password is wrong");
+        }
+    }
+
     static async promote(username, password, targetUser) {
         if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || targetUser == null || typeof targetUser !== "string") {
             throw new Error("invalid input");

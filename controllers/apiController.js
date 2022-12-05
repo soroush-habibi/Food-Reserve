@@ -520,10 +520,13 @@ export default class apiController {
         }
     }
 
+    static async deleteFood(req, res) {
+
+    }
+
     static async reserveFood(req, res) {
         if (req.body.id == null || typeof req.body.id !== "string" || req.body.amount == null || typeof req.body.amount !== "number"
             || req.body.location == null || typeof req.body.location !== "string") {
-            // console.log("OK");
             res.status(400).json({
                 success: false,
                 body: null,
