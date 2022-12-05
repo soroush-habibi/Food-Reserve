@@ -14,4 +14,6 @@ router.post("/user/increase-currency", apiController.authorization, apiControlle
 
 router.post("/food", apiController.authorization, apiController.createFood);
 
+router.post("/food/reserve", apiController.authorization, apiController.reserveFood);
+
 export default router;

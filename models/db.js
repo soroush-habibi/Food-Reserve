@@ -1,5 +1,5 @@
 import mongodb from 'mongodb';
-import bcrypt, { hash } from 'bcrypt';
+import bcrypt from 'bcrypt';
 
 export default class DB {
     static async connect(func) {

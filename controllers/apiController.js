@@ -1,9 +1,9 @@
 import JWT from "jsonwebtoken";
 import fs from 'fs';
 import path from 'path';
+import mongodb from 'mongodb';
 
 import DB from "../models/db.js";
-import { request } from "http";
 
 export default class apiController {
     static async login(req, res) {
@@ -416,8 +416,6 @@ export default class apiController {
             return;
         }
 
-        console.log(req.body.amount);
-
         try {
             DB.connect(async (client) => {
                 const result = await DB.increaseCurrency(req.username, req.password, req.body.amount).catch(e => {
@@ -495,6 +493,63 @@ export default class apiController {
                     res.status(201).json({
                         success: true,
                         body: result.insertedId,
+                        message: "OK"
+                    });
+                } else {
+                    res.status(500).json({
+                        success: false,
+                        body: null,
+                        message: "Internal error"
+                    });
+                }
+
+                client.close();
+            }).catch(e => {
+                res.status(500).json({
+                    success: false,
+                    body: null,
+                    message: e.message
+                });
+            });
+        } catch (e) {
+            res.status(500).json({
+                success: false,
+                body: null,
+                message: e.message
+            });
+        }
+    }
+
+    static async reserveFood(req, res) {
+        if (req.body.id == null || typeof req.body.id !== "string" || req.body.amount == null || typeof req.body.amount !== "number"
+            || req.body.location == null || typeof req.body.location !== "string") {
+            // console.log("OK");
+            res.status(400).json({
+                success: false,
+                body: null,
+                message: "Invalid input"
+            });
+            return;
+        }
+
+        try {
+            DB.connect(async (client) => {
+                const result = await DB.reserveFood(req.username, req.password, mongodb.ObjectId(req.body.id), req.body.amount, req.body.location).catch(e => {
+                    res.status(400).json({
+                        success: false,
+                        body: null,
+                        message: e.message
+                    });
+                });
+
+                if (!result) {
+                    return;
+                }
+
+                if (result.result.acknowledged && result.result2.acknowledged) {
+                    res.status(200).json({
+                        success: true,
+                        body: result.result.modifiedCount + " - " + result.result2.modifiedCount,
                         message: "OK"
                     });
                 } else {

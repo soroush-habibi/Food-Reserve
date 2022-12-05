@@ -37,6 +37,4 @@ app.use(rateLimit({
 
 app.use(helmet());
 
-
-
 app.use("/api", apiRouter);
