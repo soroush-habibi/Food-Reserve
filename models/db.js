@@ -196,6 +196,13 @@ export default class DB {
             throw new Error("cant not find user");
         } else if (await bcrypt.compare(password, hashedPassword.password)) {
             const food = await this.client.db("Food").collection("foods").findOne({ _id: id });
+
+            for (let i of food.users) {
+                if (i.username === username) {
+                    throw new Error("you reserved this food");
+                }
+            }
+
             if (!food) {
                 throw new Error("can not find food");
             } else if ((food.time.getTime() - (1000 * 60 * 60 * 24)) < Date.now()) {
@@ -205,7 +212,15 @@ export default class DB {
             } else if (hashedPassword.currency < (food.price * amount)) {
                 throw new Error("you dont have enough money")
             } else {
-                const result = await this.client.db("Food").collection("foods").updateOne({ _id: id }, { $inc: { reserves_count: amount } });
+                const result = await this.client.db("Food").collection("foods").updateOne({ _id: id }, {
+                    $inc: { reserves_count: amount },
+                    $push: {
+                        users: {
+                            username: username,
+                            money: amount * food.price
+                        }
+                    }
+                });
                 const result2 = await this.client.db("Food").collection("users").updateOne({ username: username }, {
                     $push: {
                         food_reserves: {
@@ -255,7 +270,8 @@ export default class DB {
                 price: price,
                 locations: locations,
                 time: time,
-                reserves_count: 0
+                reserves_count: 0,
+                users: []
             });
             return result;
         } else {
@@ -279,6 +295,12 @@ export default class DB {
         } else if (!hashedPassword.admin) {
             throw new Error("you dont have permission to delete food");
         } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const users = await this.client.db("Food").collection("foods").findOne({ _id: id });
+
+            for (let i of users.users) {
+                await this.client.db("Food").collection("users").updateOne({ username: i.username }, { $inc: { currency: i.money } });
+            }
+
             const result = await this.client.db("Food").collection("foods").deleteOne({ _id: id });
             const result2 = await this.client.db("Food").collection("users").updateMany(
                 {

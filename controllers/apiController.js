@@ -114,6 +114,9 @@ export default class apiController {
                         });
                     }
                 });
+
+                client.close();
+
                 if (!result) {
                     return
                 }
@@ -130,7 +133,6 @@ export default class apiController {
                         message: "Internal error"
                     });
                 }
-                client.close();
             }).catch(e => {
                 res.status(500).json({
                     success: false,
@@ -426,6 +428,8 @@ export default class apiController {
                     });
                 });
 
+                client.close();
+
                 if (!result) {
                     return;
                 }
@@ -443,8 +447,6 @@ export default class apiController {
                         message: "Internal error"
                     });
                 }
-
-                client.close();
             }).catch(e => {
                 res.status(500).json({
                     success: false,
@@ -485,6 +487,8 @@ export default class apiController {
                     });
                 });
 
+                client.close();
+
                 if (!result) {
                     return;
                 }
@@ -502,8 +506,6 @@ export default class apiController {
                         message: "Internal error"
                     });
                 }
-
-                client.close();
             }).catch(e => {
                 res.status(500).json({
                     success: false,
@@ -521,7 +523,71 @@ export default class apiController {
     }
 
     static async deleteFood(req, res) {
+        if (req.body.id == null || typeof req.body.id !== "string") {
+            res.status(400).json({
+                success: false,
+                body: null,
+                message: "Invalid input"
+            });
+            return;
+        }
 
+        let bsonID;
+
+        try {
+            bsonID = mongodb.ObjectId(req.body.id);
+        } catch (e) {
+            res.status(400).json({
+                success: false,
+                body: null,
+                message: "Invalid input"
+            });
+            return;
+        }
+
+        try {
+            DB.connect(async (client) => {
+                const result = await DB.deleteFood(req.username, req.password, bsonID).catch(e => {
+                    res.status(400).json({
+                        success: false,
+                        body: null,
+                        message: e.message
+                    });
+                });
+
+                client.close();
+
+                if (!result) {
+                    return;
+                }
+
+                if (result.result.acknowledged && result.result2.acknowledged) {
+                    res.status(200).json({
+                        success: true,
+                        body: result.result.deletedCount + " - " + result.result2.modifiedCount,
+                        message: "OK"
+                    });
+                } else {
+                    res.status(500).json({
+                        success: false,
+                        body: null,
+                        message: "Internal error"
+                    });
+                }
+            }).catch((e) => {
+                res.status(500).json({
+                    success: false,
+                    body: null,
+                    message: e.message
+                });
+            });
+        } catch (e) {
+            res.status(500).json({
+                success: false,
+                body: null,
+                message: e.message
+            });
+        }
     }
 
     static async reserveFood(req, res) {
@@ -535,9 +601,22 @@ export default class apiController {
             return;
         }
 
+        let bsonID;
+
+        try {
+            bsonID = mongodb.ObjectId(req.body.id);
+        } catch (e) {
+            res.status(400).json({
+                success: false,
+                body: null,
+                message: "Invalid input"
+            });
+            return;
+        }
+
         try {
             DB.connect(async (client) => {
-                const result = await DB.reserveFood(req.username, req.password, mongodb.ObjectId(req.body.id), req.body.amount, req.body.location).catch(e => {
+                const result = await DB.reserveFood(req.username, req.password, bsonID, req.body.amount, req.body.location).catch(e => {
                     res.status(400).json({
                         success: false,
                         body: null,
