@@ -1,5 +1,5 @@
 import mongodb from 'mongodb';
-import bcrypt from 'bcrypt';
+import bcrypt, { hash } from 'bcrypt';
 
 export default class DB {
     static async connect(func) {
@@ -203,6 +203,12 @@ export default class DB {
                 }
             }
 
+            for (let i of hashedPassword.food_reserves) {
+                if (food.meal === i.meal && food.time.getTime() === i.time.getTime()) {
+                    throw new Error("you can not reserve another food in this time");
+                }
+            }
+
             if (!food) {
                 throw new Error("can not find food");
             } else if ((food.time.getTime() - (1000 * 60 * 60 * 24)) < Date.now()) {
@@ -217,7 +223,8 @@ export default class DB {
                     $push: {
                         users: {
                             username: username,
-                            money: amount * food.price
+                            money: amount * food.price,
+                            location: location
                         }
                     }
                 });
