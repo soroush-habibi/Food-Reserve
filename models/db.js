@@ -244,6 +244,60 @@ export default class DB {
         }
     }
 
+    static async cancelReserve(username, password, id) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || id == null || !(id instanceof mongodb.ObjectId)) {
+            throw new Error("Invalid input");
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw new Error("can not find user");
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            const food = await this.client.db("Food").collection("foods").findOne({ _id: id });
+
+            if (!food) {
+                throw new Error("can not find food");
+            }
+
+            let money = 0;
+
+            for (let i of food.users) {
+                if (username === i.username) {
+                    money = i.money;
+                }
+            }
+
+            if (money === 0) {
+                throw new Error("user does not reserve this food");
+            } else {
+                console.log(money);
+                const result = await this.client.db("Food").collection("foods").updateOne({ _id: id }, {
+                    $pull: { users: { username: username } },
+                    $inc: {
+                        reserves_count: -parseInt(money / food.price)
+                    }
+
+                });
+                const result2 = await this.client.db("Food").collection("users").updateOne({ username: username }, {
+                    $pull: {
+                        food_reserves: {
+                            name: food.name,
+                            meal: food.meal,
+                            time: food.time
+                        }
+                    },
+                    $inc: { currency: money }
+
+                });
+
+                return { result, result2 };
+            }
+        } else {
+            throw new Error("Password is wrong");
+        }
+    }
+
     static async createFood(username, password, name, meal, price, locations, time) {
         if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || typeof name !== "string"
             || name.length <= 3 || typeof meal !== "number" || meal < 1 || meal > 5 || typeof price !== "number" || price <= 0
