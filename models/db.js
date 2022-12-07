@@ -439,4 +439,56 @@ export default class DB {
             throw new Error("Password is wrong");
         }
     }
+
+    static async getFoods(username, password, year, month, day) {
+        if (username == null || typeof username !== "string" || password == null || typeof password !== "string" || year == null || typeof year !== "number"
+            || month == null || typeof month !== "number" || day == null || typeof day !== "number") {
+            throw new Error("Invalid input");
+        }
+
+        const hashedPassword = await this.client.db("Food").collection("users").findOne({ username: username });
+
+        if (!hashedPassword) {
+            throw new Error("can not find user");
+        } else if (await bcrypt.compare(password, hashedPassword.password)) {
+            let meal1 = [];
+            let meal2 = [];
+            let meal3 = [];
+            let meal4 = [];
+            let meal5 = [];
+
+            const time1 = new Date(year, month - 1, day, 0, 0, 0);
+            const time2 = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+            let foods = [];
+
+            await this.client.db("Food").collection("foods").find({ time: { $gte: time1, $lte: time2 } }).forEach(value => {
+                foods.push(value);
+            });
+
+            for (let i of foods) {
+                switch (i.meal) {
+                    case 1:
+                        meal1.push(i);
+                        break;
+                    case 2:
+                        meal2.push(i);
+                        break;
+                    case 3:
+                        meal3.push(i);
+                        break;
+                    case 4:
+                        meal4.push(i);
+                        break;
+                    case 5:
+                        meal5.push(i);
+                        break;
+                }
+            }
+
+            return [meal1, meal2, meal3, meal4, meal5];
+        } else {
+            throw new Error("Password is wrong");
+        }
+    }
 }

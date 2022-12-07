@@ -2,7 +2,6 @@ import express from 'express';
 import 'dotenv/config';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import mongodb from 'mongodb';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
