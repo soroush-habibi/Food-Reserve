@@ -12,6 +12,8 @@ router.put("/user", apiController.authorization, apiController.editUser);
 
 router.post("/user/increase-currency", apiController.authorization, apiController.increaseCurrency);
 
+router.get("/food", apiController.authorization, apiController.getFoods);
+
 router.post("/food", apiController.authorization, apiController.createFood);
 
 router.delete("/food", apiController.authorization, apiController.deleteFood);
