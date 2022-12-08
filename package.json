@@ -1,7 +1,7 @@
 {
   "name": "food-reserve",
   "version": "1.0.0",
-  "description": "Web application for reserving food with Node.Js , Express.Js , MongoDB and REST API",
+  "description": "API for reserving food with Node.Js , Express.Js , MongoDB and REST API",
   "main": "index.js",
   "type": "module",
   "scripts": {
